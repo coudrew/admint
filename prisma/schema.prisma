@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,4 +6,78 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+model UserProfile {
+  id            String          @id @db.Uuid
+  username      String
+  avatarUrl     String          @map("avatar_url")
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  Tenant        Tenant[]
+  UserRole      UserRole[]
+  UserWorkSpace UserWorkSpace[]
+
+  @@map("user_profiles")
+}
+
+model Tenant {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  ownerId   String      @map("owner_id") @db.Uuid
+  owner     UserProfile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  Role      Role[]
+  WorkSpace WorkSpace[]
+  UserRole  UserRole[]
+
+  @@map("tenants")
+}
+
+model WorkSpace {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  tenantId      String          @map("tenant_id") @db.Uuid
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  UserRole      UserRole[]
+  UserWorkSpace UserWorkSpace[]
+
+  @@unique([id, tenantId])
+  @@map("workspaces")
+}
+
+model UserWorkSpace {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userProfileId String      @map("user_profile_id") @db.Uuid
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  workSpaceId   String      @map("workspace_id") @db.Uuid
+  workSpace     WorkSpace   @relation(fields: [workSpaceId], references: [id], onDelete: Cascade)
+
+  @@map("user_workspaces")
+}
+
+model Role {
+  id       String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name     String
+  tenantId String     @map("tenant_id") @db.Uuid
+  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  UserRole UserRole[]
+
+  @@unique([id, tenantId])
+  @@map("roles")
+}
+
+model UserRole {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userProfileId String      @map("user_profile_id") @db.Uuid
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  tenantId      String      @map("tenant_id") @db.Uuid
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roleId        String      @map("role_id") @db.Uuid
+  role          Role        @relation(fields: [roleId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  workSpaceId   String      @map("workspace_id") @db.Uuid
+  workSpace     WorkSpace   @relation(fields: [workSpaceId, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@map("user_roles")
 }
