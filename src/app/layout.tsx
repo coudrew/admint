@@ -27,7 +27,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div className="grid grid-cols-1 grid-rows-5 lg:grid-rows-1 lg:grid-cols-5 items-center justify-items-center min-h-screen">
+          <div className="flex flex-col col-span-1 row-span-2 lg:col-span-3 lg:row-span-1 items-center justify-center bg-slate-400 h-full w-full">
+            <h1 className="text-6xl text-slate-300">Admint</h1>
+            <p className="text-slate-800">User management portal</p>
+          </div>
+          {children}
+        </div>
       </body>
     </html>
   );
