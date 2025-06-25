@@ -7,27 +7,29 @@ import { redirect } from "next/navigation";
 export async function signUpWithEmailAndPassword(formData: SignUpFormSchema) {
   const validationResult = signUpFormSchema.safeParse(formData);
 
-  try {
-    if (validationResult.success) {
-      const { email, password, organization } = validationResult.data;
-      const supabase = await createClient();
+  if (!validationResult.success) {
+    return {
+      error: "Malformed credentials",
+      code: "AUTH_ERROR",
+    };
+  } else {
+    const { email, password, organization } = validationResult.data;
+    const supabase = await createClient();
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { organization } },
-      });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { organization } },
+    });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-    } else {
-      throw new Error(validationResult.error.message);
-    }
-  } catch (e) {
-    if (e instanceof Error) {
-      return { message: e.message };
+    if (error) {
+      return {
+        error: "Signup error",
+        code: "AUTH_ERROR",
+        details: error.message,
+      };
     }
   }
+
   redirect("/");
 }

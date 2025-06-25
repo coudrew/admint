@@ -7,6 +7,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,15 +15,23 @@ import { Input } from "@/components/ui/input";
 import { SignUpFormSchema, signUpFormSchema } from "./schema";
 import { Button } from "@/components/ui/button";
 import { signUpWithEmailAndPassword } from "./actions";
+import { startTransition } from "react";
 
 export default function SignUpForm() {
   const form = useForm({
     resolver: zodResolver(signUpFormSchema),
+    mode: "onBlur",
     defaultValues: { email: "", password: "", organization: "" },
   });
 
   const onSubmit = async (formData: SignUpFormSchema) => {
-    const error = await signUpWithEmailAndPassword(formData);
+    startTransition(async () => {
+      const response = await signUpWithEmailAndPassword(formData);
+
+      if (response.error) {
+        form.setError("root", { message: response.details || response.error });
+      }
+    });
   };
 
   return (
@@ -40,6 +49,7 @@ export default function SignUpForm() {
               <FormDescription className="sr-only">
                 Your organization name
               </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -55,6 +65,7 @@ export default function SignUpForm() {
               <FormDescription className="sr-only">
                 Your account User name
               </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -70,15 +81,16 @@ export default function SignUpForm() {
               <FormDescription className="sr-only">
                 Your account password
               </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />
         <Button
-          disabled={!form.formState.isValid}
+          disabled={!form.formState.isValid || form.formState.isSubmitting}
           className="bg-slate-500 hover:bg-slate-500/90"
           type="submit"
         >
-          Sign Up
+          {form.formState.isSubmitting ? "Loading" : "Sign Up"}
         </Button>
       </form>
     </Form>
