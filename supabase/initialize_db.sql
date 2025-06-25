@@ -15,29 +15,34 @@ alter default privileges for role postgres in schema public grant all on routine
 alter default privileges for role postgres in schema public grant all on sequences to prisma;
 
 -- function create user profile
-create or replace function create_user_profile()
-returns trigger
-security definer
-language plpgsql
-as $$
-begin
-    insert into public.user_profiles (id, username, avatar_url)
-    values (
-    new.id,
-    coalesce(new.raw_user_meta_data ->> 'name', ''),
-    coalesce(new.raw_user_meta_data ->> 'avatar_url', '')
+CREATE OR REPLACE FUNCTION create_user_profile()
+RETURNS trigger
+SECURITY DEFINER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Add some debug output
+    RAISE NOTICE 'Trigger fired for user ID: %', NEW.id;
+    RAISE NOTICE 'Email from meta_data: %', NEW.raw_user_meta_data ->> 'email';
+
+    INSERT INTO public.user_profiles (id, username, avatar_url)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data ->> 'avatar_url', '')
     );
 
-    return new;
-exception
-    when others then
-        raise log 'Error creating user profile %, %', new.id, sqlerrm;
-        return new;
-end;
+    RAISE NOTICE 'Successfully created profile for user: %', NEW.id;
+    RETURN NEW;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error creating user profile for %: %', NEW.id, SQLERRM;
+        RETURN NEW;
+END;
 $$;
 
 -- trigger to call function to create user profile on new auth.users record
 create trigger create_profile_on_new_user
     after insert on auth.users
     for each row
-    execute function create_user_profile();
+    execute function public.create_user_profile();
