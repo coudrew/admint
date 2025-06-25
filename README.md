@@ -27,6 +27,8 @@ supabase start
 ```env
 DATABASE_URL=your-connection-string
 DIRECT_URL=your-direct-connection-string
+NEXT_PUBLIC_SUPABASE_URL=your-local-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-supabase-anon-key
 ```
 The connection string values can be obtained from your local Supabase console by clicking the **Connect** button. You will need to add the password you created in step 4 to the connection string. Furthermore, the connection string provided by Supabase may not have the fully correct port number, it should be 54322, not 5432
 
